@@ -8,11 +8,12 @@
 #define TAM_ID 7
 #define TAM_DESC 60
 #define CAPACIDADE_INICIAL 2
+#define TOTAL_VAGAS (LINHAS * COLUNAS)
 
 typedef struct {
     char id[TAM_ID + 1];
     char descricao[TAM_DESC + 1];
-    int categoria;   /* 1 = carro, 2 = moto */
+    int categoria;   /* 1 = Carro, 2 = Moto */
     int fileira;
     int coluna;
 } Veiculo;
@@ -85,6 +86,15 @@ void para_maiusculo(char *str) {
     }
 }
 
+int id_valido(const char *id) {
+    int i;
+    if (strlen(id) != TAM_ID) return 0;
+    for (i = 0; i < TAM_ID; i++) {
+        if (!isalnum((unsigned char)id[i])) return 0;
+    }
+    return 1;
+}
+
 int buscar_veiculo(const Colecao *c, const char *id) {
     int i;
     char id_busca[TAM_ID + 1];
@@ -106,6 +116,99 @@ int buscar_veiculo(const Colecao *c, const char *id) {
         }
     }
     return -1;
+}
+
+void cadastrar_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
+    char id[100];
+    char desc[150];
+    int cat, f, col;
+
+    if (c->qtd >= TOTAL_VAGAS) {
+        printf("\nErro: Estacionamento lotado (%d vagas ocupadas).\n", TOTAL_VAGAS);
+        return;
+    }
+
+    printf("\n--- CADASTRO DE VEICULO ---\n");
+    printf("Digite o identificador (7 letras/numeros): ");
+    if (scanf("%99s", id) != 1) {
+        printf("Erro na leitura do identificador.\n");
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    para_maiusculo(id);
+
+    if (!id_valido(id)) {
+        printf("Erro: ID invalido! Deve ter exatamente 7 caracteres (A-Z e 0-9).\n");
+        return;
+    }
+
+    if (buscar_veiculo(c, id) != -1) {
+        printf("Erro: Ja existe um veiculo com esse identificador.\n");
+        return;
+    }
+
+    printf("Digite a descricao (max 60 caracteres): ");
+    if (fgets(desc, sizeof(desc), stdin) == NULL) {
+        printf("Erro na leitura da descricao.\n");
+        return;
+    }
+    desc[strcspn(desc, "\n")] = '\0';
+
+    if (strlen(desc) == 0 || strlen(desc) > TAM_DESC) {
+        printf("Erro: Descricao invalida! Nao pode ser vazia ou passar de 60 caracteres.\n");
+        return;
+    }
+
+    printf("Digite a categoria (1 = Carro, 2 = Moto): ");
+    if (scanf("%d", &cat) != 1 || (cat != 1 && cat != 2)) {
+        printf("Erro: Categoria invalida! Digite 1 ou 2.\n");
+        limpar_buffer();
+        return;
+    }
+
+    printf("Digite a fileira (1 a %d): ", LINHAS);
+    if (scanf("%d", &f) != 1 || f < 1 || f > LINHAS) {
+        printf("Erro: Fileira invalida! Digite de 1 a %d.\n", LINHAS);
+        limpar_buffer();
+        return;
+    }
+
+    printf("Digite a coluna (1 a %d): ", COLUNAS);
+    if (scanf("%d", &col) != 1 || col < 1 || col > COLUNAS) {
+        printf("Erro: Coluna invalida! Digite de 1 a %d.\n", COLUNAS);
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    if (mapa[f - 1][col - 1] == 1) {
+        printf("Erro: A vaga F%d/C%d ja esta ocupada.\n", f, col);
+        return;
+    }
+
+    if (c->qtd == c->capacidade) {
+        int nova_cap = c->capacidade * 2;
+        Veiculo *temp = (Veiculo *)realloc(c->dados, nova_cap * sizeof(Veiculo));
+        if (temp == NULL) {
+            printf("Erro: Falha ao ampliar a memoria.\n");
+            return;
+        }
+        c->dados = temp;
+        c->capacidade = nova_cap;
+    }
+
+    strcpy(c->dados[c->qtd].id, id);
+    strcpy(c->dados[c->qtd].descricao, desc);
+    c->dados[c->qtd].categoria = cat;
+    c->dados[c->qtd].fileira = f;
+    c->dados[c->qtd].coluna = col;
+
+    c->qtd++;
+    mapa[f - 1][col - 1] = 1;
+
+    printf("\nSucesso! Veiculo %s cadastrado na vaga F%d/C%d.\n", id, f, col);
 }
 
 void consultar_veiculo(const Colecao *c) {
@@ -141,90 +244,6 @@ void consultar_veiculo(const Colecao *c) {
                c->dados[idx].fileira,
                c->dados[idx].coluna);
     }
-}
-
-void listar_veiculos(const Colecao *c) {
-    int i;
-
-    if (c->qtd == 0) {
-        printf("\nNao ha veiculos cadastrados no momento.\n");
-        return;
-    }
-
-    printf("\n--- VEICULOS CADASTRADOS (%d) ---\n", c->qtd);
-    for (i = 0; i < c->qtd; i++) {
-        printf("[%d] ID: %s | Categoria: %-5s | Posicao: F%d/C%d | Descricao: %s\n",
-               i + 1,
-               c->dados[i].id,
-               (c->dados[i].categoria == 1) ? "Carro" : "Moto",
-               c->dados[i].fileira,
-               c->dados[i].coluna,
-               c->dados[i].descricao);
-    }
-}
-
-int main(void) {
-    int mapa[LINHAS][COLUNAS];
-    Colecao colecao;
-    int opcao = -1;
-
-    iniciar_mapa(mapa);
-
-    if (!iniciar_colecao(&colecao)) {
-        printf("Erro ao alocar memoria inicial.\n");
-        return 1;
-    }
-
-    do {
-        printf("\n====================================\n");
-        printf("   SISTEMA DE ESTACIONAMENTO (C)    \n");
-        printf("====================================\n");
-        printf("2 - Consultar veiculo por ID\n");
-        printf("6 - Listar veiculos cadastrados\n");
-        printf("7 - Exibir mapa de vagas\n");
-        printf("0 - Encerrar\n");
-        printf("Escolha uma opcao: ");
-
-        if (scanf("%d", &opcao) != 1) {
-            printf("Opcao invalida! Digite um numero.\n");
-            limpar_buffer();
-            continue;
-        }
-        limpar_buffer();
-
-        switch (opcao) {
-            case 2:
-                consultar_veiculo(&colecao);
-                break;
-            case 3:
-                mover_veiculo(&colecao, mapa);
-                break;
-            case 4:
-                atualizar_veiculo(&colecao);
-                break;
-            case 5:
-                remover_veiculo(&colecao, mapa);
-                break;
-            case 6:
-                listar_veiculos(&colecao);
-                break;
-            case 7:
-                exibir_mapa(mapa);
-                break;
-            case 8:
-                exibir_relatorio(&colecao, mapa);
-                break;
-            case 0:
-                printf("\nEncerrando sistema e liberando memoria...\n");
-                break;
-            default:
-                printf("\nOpcao invalida! Tente novamente.\n");
-        }
-
-    } while (opcao != 0);
-
-    liberar_colecao(&colecao);
-    return 0;
 }
 
 void mover_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
@@ -382,6 +401,26 @@ void remover_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
     printf("Sucesso: Veiculo removido e vaga F%d/C%d liberada.\n", f, col);
 }
 
+void listar_veiculos(const Colecao *c) {
+    int i;
+
+    if (c->qtd == 0) {
+        printf("\nNao ha veiculos cadastrados no momento.\n");
+        return;
+    }
+
+    printf("\n--- VEICULOS CADASTRADOS (%d) ---\n", c->qtd);
+    for (i = 0; i < c->qtd; i++) {
+        printf("[%d] ID: %s | Categoria: %-5s | Posicao: F%d/C%d | Descricao: %s\n",
+               i + 1,
+               c->dados[i].id,
+               (c->dados[i].categoria == 1) ? "Carro" : "Moto",
+               c->dados[i].fileira,
+               c->dados[i].coluna,
+               c->dados[i].descricao);
+    }
+}
+
 void exibir_relatorio(const Colecao *c, int mapa[LINHAS][COLUNAS]) {
     int ocupadas = 0;
     int carros = 0;
@@ -415,7 +454,23 @@ void exibir_relatorio(const Colecao *c, int mapa[LINHAS][COLUNAS]) {
     printf("===================================\n");
 }
 
-printf("1 - Cadastrar veiculo\n");
+int main(void) {
+    int mapa[LINHAS][COLUNAS];
+    Colecao colecao;
+    int opcao = -1;
+
+    iniciar_mapa(mapa);
+
+    if (!iniciar_colecao(&colecao)) {
+        printf("Erro ao alocar memoria inicial.\n");
+        return 1;
+    }
+
+    do {
+        printf("\n====================================\n");
+        printf("   SISTEMA DE ESTACIONAMENTO (C)    \n");
+        printf("====================================\n");
+        printf("1 - Cadastrar veiculo\n");
         printf("2 - Consultar veiculo por ID\n");
         printf("3 - Mover veiculo para outra vaga\n");
         printf("4 - Atualizar descricao ou categoria\n");
@@ -424,3 +479,49 @@ printf("1 - Cadastrar veiculo\n");
         printf("7 - Exibir mapa de vagas\n");
         printf("8 - Exibir relatorio da ocupacao\n");
         printf("0 - Encerrar\n");
+        printf("Escolha uma opcao: ");
+
+        if (scanf("%d", &opcao) != 1) {
+            printf("Opcao invalida! Digite um numero.\n");
+            limpar_buffer();
+            continue;
+        }
+        limpar_buffer();
+
+        switch (opcao) {
+            case 1:
+                cadastrar_veiculo(&colecao, mapa);
+                break;
+            case 2:
+                consultar_veiculo(&colecao);
+                break;
+            case 3:
+                mover_veiculo(&colecao, mapa);
+                break;
+            case 4:
+                atualizar_veiculo(&colecao);
+                break;
+            case 5:
+                remover_veiculo(&colecao, mapa);
+                break;
+            case 6:
+                listar_veiculos(&colecao);
+                break;
+            case 7:
+                exibir_mapa(mapa);
+                break;
+            case 8:
+                exibir_relatorio(&colecao, mapa);
+                break;
+            case 0:
+                printf("\nEncerrando sistema e liberando memoria...\n");
+                break;
+            default:
+                printf("\nOpcao invalida! Tente novamente.\n");
+        }
+
+    } while (opcao != 0);
+
+    liberar_colecao(&colecao);
+    return 0;
+}
