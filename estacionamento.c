@@ -280,3 +280,55 @@ void mover_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
 
     printf("Sucesso: Veiculo %s movido para F%d/C%d!\n", c->dados[idx].id, nova_f, nova_c);
 }
+
+void atualizar_veiculo(Colecao *c) {
+    char id[100];
+    int idx;
+    char nova_desc[150];
+    int nova_cat = 0;
+
+    if (c->qtd == 0) {
+        printf("\nNenhum veiculo cadastrado no estacionamento.\n");
+        return;
+    }
+
+    printf("\n--- ATUALIZAR VEICULO ---\n");
+    printf("Digite o identificador do veiculo que deseja atualizar: ");
+    if (scanf("%99s", id) != 1) {
+        printf("Entrada invalida.\n");
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    idx = buscar_veiculo(c, id);
+    if (idx == -1) {
+        printf("Veiculo nao localizado.\n");
+        return;
+    }
+
+    printf("Nova descricao (max 60 caracteres): ");
+    if (fgets(nova_desc, sizeof(nova_desc), stdin) == NULL) {
+        printf("Erro na leitura da descricao.\n");
+        return;
+    }
+    nova_desc[strcspn(nova_desc, "\n")] = '\0';
+
+    if (strlen(nova_desc) == 0 || strlen(nova_desc) > TAM_DESC) {
+        printf("Erro: Descricao invalida.\n");
+        return;
+    }
+
+    printf("Nova categoria (1 = Carro, 2 = Moto): ");
+    if (scanf("%d", &nova_cat) != 1 || (nova_cat != 1 && nova_cat != 2)) {
+        printf("Erro: Categoria invalida.\n");
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    strcpy(c->dados[idx].descricao, nova_desc);
+    c->dados[idx].categoria = nova_cat;
+
+    printf("Sucesso: Dados do veiculo %s atualizados!\n", c->dados[idx].id);
+}
