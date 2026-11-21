@@ -369,3 +369,36 @@ void remover_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
 
     printf("Sucesso: Veiculo removido e vaga F%d/C%d liberada.\n", f, col);
 }
+
+void exibir_relatorio(const Colecao *c, int mapa[LINHAS][COLUNAS]) {
+    int ocupadas = 0;
+    int carros = 0;
+    int motos = 0;
+    int i, j, livres;
+    float percentual;
+
+    for (i = 0; i < LINHAS; i++) {
+        for (j = 0; j < COLUNAS; j++) {
+            if (mapa[i][j] == 1) {
+                ocupadas++;
+            }
+        }
+    }
+
+    for (i = 0; i < c->qtd; i++) {
+        if (c->dados[i].categoria == 1) carros++;
+        else if (c->dados[i].categoria == 2) motos++;
+    }
+
+    livres = TOTAL_VAGAS - ocupadas;
+    percentual = ((float)ocupadas / TOTAL_VAGAS) * 100.0f;
+
+    printf("\n====== RELATORIO DE OCUPACAO ======\n");
+    printf("Total de vagas: %d\n", TOTAL_VAGAS);
+    printf("Vagas ocupadas: %d\n", ocupadas);
+    printf("Vagas livres:   %d\n", livres);
+    printf("Taxa de ocupacao: %.2f%%\n", percentual);
+    printf("Total de carros:  %d\n", carros);
+    printf("Total de motos:   %d\n", motos);
+    printf("===================================\n");
+}
