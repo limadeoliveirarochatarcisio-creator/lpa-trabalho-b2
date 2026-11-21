@@ -79,6 +79,32 @@ void limpar_buffer(void) {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+/* Le uma linha inteira (ate '\n') sem estourar o buffer.
+   Se a linha for maior que o buffer, descarta o restante. Retorna 0 em EOF/erro. */
+int ler_linha(char *buf, size_t tam) {
+    size_t n;
+    if (fgets(buf, (int)tam, stdin) == NULL) {
+        return 0;
+    }
+    n = strlen(buf);
+    if (n > 0 && buf[n - 1] == '\n') {
+        buf[n - 1] = '\0';
+    } else {
+        limpar_buffer();
+    }
+    return 1;
+}
+
+/* Descricao valida: nao vazia, sem ser so espacos e com ate TAM_DESC caracteres. */
+int descricao_valida(const char *desc) {
+    size_t i, n = strlen(desc);
+    if (n == 0 || n > TAM_DESC) return 0;
+    for (i = 0; i < n; i++) {
+        if (!isspace((unsigned char)desc[i])) return 1;
+    }
+    return 0;
+}
+
 void para_maiusculo(char *str) {
     int i;
     for (i = 0; str[i] != '\0'; i++) {
@@ -150,13 +176,12 @@ void cadastrar_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
     }
 
     printf("Digite a descricao (max 60 caracteres): ");
-    if (fgets(desc, sizeof(desc), stdin) == NULL) {
+    if (!ler_linha(desc, sizeof(desc))) {
         printf("Erro na leitura da descricao.\n");
         return;
     }
-    desc[strcspn(desc, "\n")] = '\0';
 
-    if (strlen(desc) == 0 || strlen(desc) > TAM_DESC) {
+    if (!descricao_valida(desc)) {
         printf("Erro: Descricao invalida! Nao pode ser vazia ou passar de 60 caracteres.\n");
         return;
     }
@@ -339,13 +364,12 @@ void atualizar_veiculo(Colecao *c) {
     }
 
     printf("Nova descricao (max 60 caracteres): ");
-    if (fgets(nova_desc, sizeof(nova_desc), stdin) == NULL) {
+    if (!ler_linha(nova_desc, sizeof(nova_desc))) {
         printf("Erro na leitura da descricao.\n");
         return;
     }
-    nova_desc[strcspn(nova_desc, "\n")] = '\0';
 
-    if (strlen(nova_desc) == 0 || strlen(nova_desc) > TAM_DESC) {
+    if (!descricao_valida(nova_desc)) {
         printf("Erro: Descricao invalida.\n");
         return;
     }
@@ -458,6 +482,7 @@ int main(void) {
     int mapa[LINHAS][COLUNAS];
     Colecao colecao;
     int opcao = -1;
+    int leitura;
 
     iniciar_mapa(mapa);
 
@@ -472,8 +497,8 @@ int main(void) {
         printf("====================================\n");
         printf("1 - Cadastrar veiculo\n");
         printf("2 - Consultar veiculo por ID\n");
-        printf("3 - Mover veiculo para outra vaga\n");
-        printf("4 - Atualizar descricao ou categoria\n");
+        printf("3 - Atualizar descricao ou categoria\n");
+        printf("4 - Mover veiculo para outra vaga\n");
         printf("5 - Remover veiculo\n");
         printf("6 - Listar veiculos cadastrados\n");
         printf("7 - Exibir mapa de vagas\n");
@@ -481,7 +506,12 @@ int main(void) {
         printf("0 - Encerrar\n");
         printf("Escolha uma opcao: ");
 
-        if (scanf("%d", &opcao) != 1) {
+        leitura = scanf("%d", &opcao);
+        if (leitura == EOF) {
+            printf("\nFim da entrada. Encerrando sistema e liberando memoria...\n");
+            break;
+        }
+        if (leitura != 1) {
             printf("Opcao invalida! Digite um numero.\n");
             limpar_buffer();
             continue;
@@ -496,10 +526,10 @@ int main(void) {
                 consultar_veiculo(&colecao);
                 break;
             case 3:
-                mover_veiculo(&colecao, mapa);
+                atualizar_veiculo(&colecao);
                 break;
             case 4:
-                atualizar_veiculo(&colecao);
+                mover_veiculo(&colecao, mapa);
                 break;
             case 5:
                 remover_veiculo(&colecao, mapa);
