@@ -1,0 +1,10 @@
+# Executaveis e artefatos de compilacao
+estacionamento
+estacionamento.exe
+*.o
+*.out
+
+# Editores / sistema
+.vscode/
+.idea/
+.DS_Store
