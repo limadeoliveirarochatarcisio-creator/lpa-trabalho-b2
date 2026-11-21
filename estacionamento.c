@@ -332,3 +332,40 @@ void atualizar_veiculo(Colecao *c) {
 
     printf("Sucesso: Dados do veiculo %s atualizados!\n", c->dados[idx].id);
 }
+
+void remover_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
+    char id[100];
+    int idx;
+    int f, col, i;
+
+    if (c->qtd == 0) {
+        printf("\nNenhum veiculo cadastrado no estacionamento.\n");
+        return;
+    }
+
+    printf("\n--- REMOVER VEICULO ---\n");
+    printf("Digite o identificador do veiculo que deseja remover: ");
+    if (scanf("%99s", id) != 1) {
+        printf("Entrada invalida.\n");
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    idx = buscar_veiculo(c, id);
+    if (idx == -1) {
+        printf("Veiculo nao localizado.\n");
+        return;
+    }
+
+    f = c->dados[idx].fileira;
+    col = c->dados[idx].coluna;
+    mapa[f - 1][col - 1] = 0;
+
+    for (i = idx; i < c->qtd - 1; i++) {
+        c->dados[i] = c->dados[i + 1];
+    }
+    c->qtd--;
+
+    printf("Sucesso: Veiculo removido e vaga F%d/C%d liberada.\n", f, col);
+}
