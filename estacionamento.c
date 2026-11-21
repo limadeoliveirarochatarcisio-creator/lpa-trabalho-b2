@@ -214,3 +214,69 @@ int main(void) {
     liberar_colecao(&colecao);
     return 0;
 }
+
+void mover_veiculo(Colecao *c, int mapa[LINHAS][COLUNAS]) {
+    char id[100];
+    int idx;
+    int nova_f = 0, nova_c = 0;
+    int f_ant, c_ant, f_novo_idx, c_novo_idx;
+
+    if (c->qtd == 0) {
+        printf("\nNenhum veiculo cadastrado no estacionamento.\n");
+        return;
+    }
+
+    printf("\n--- MOVER VEICULO ---\n");
+    printf("Digite o identificador do veiculo que deseja mover: ");
+    if (scanf("%99s", id) != 1) {
+        printf("Entrada invalida.\n");
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    idx = buscar_veiculo(c, id);
+    if (idx == -1) {
+        printf("Veiculo nao localizado.\n");
+        return;
+    }
+
+    printf("Digite a nova fileira (1 a %d): ", LINHAS);
+    if (scanf("%d", &nova_f) != 1 || nova_f < 1 || nova_f > LINHAS) {
+        printf("Erro: Fileira invalida.\n");
+        limpar_buffer();
+        return;
+    }
+
+    printf("Digite a nova coluna (1 a %d): ", COLUNAS);
+    if (scanf("%d", &nova_c) != 1 || nova_c < 1 || nova_c > COLUNAS) {
+        printf("Erro: Coluna invalida.\n");
+        limpar_buffer();
+        return;
+    }
+    limpar_buffer();
+
+    f_ant = c->dados[idx].fileira;
+    c_ant = c->dados[idx].coluna;
+
+    if (f_ant == nova_f && c_ant == nova_c) {
+        printf("O veiculo ja se encontra nesta vaga.\n");
+        return;
+    }
+
+    f_novo_idx = nova_f - 1;
+    c_novo_idx = nova_c - 1;
+
+    if (mapa[f_novo_idx][c_novo_idx] == 1) {
+        printf("Erro: A vaga de destino F%d/C%d ja esta ocupada.\n", nova_f, nova_c);
+        return;
+    }
+
+    mapa[f_ant - 1][c_ant - 1] = 0;
+    mapa[f_novo_idx][c_novo_idx] = 1;
+
+    c->dados[idx].fileira = nova_f;
+    c->dados[idx].coluna = nova_c;
+
+    printf("Sucesso: Veiculo %s movido para F%d/C%d!\n", c->dados[idx].id, nova_f, nova_c);
+}
