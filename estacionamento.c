@@ -196,11 +196,23 @@ int main(void) {
             case 2:
                 consultar_veiculo(&colecao);
                 break;
+            case 3:
+                mover_veiculo(&colecao, mapa);
+                break;
+            case 4:
+                atualizar_veiculo(&colecao);
+                break;
+            case 5:
+                remover_veiculo(&colecao, mapa);
+                break;
             case 6:
                 listar_veiculos(&colecao);
                 break;
             case 7:
                 exibir_mapa(mapa);
+                break;
+            case 8:
+                exibir_relatorio(&colecao, mapa);
                 break;
             case 0:
                 printf("\nEncerrando sistema e liberando memoria...\n");
@@ -402,3 +414,13 @@ void exibir_relatorio(const Colecao *c, int mapa[LINHAS][COLUNAS]) {
     printf("Total de motos:   %d\n", motos);
     printf("===================================\n");
 }
+
+printf("1 - Cadastrar veiculo\n");
+        printf("2 - Consultar veiculo por ID\n");
+        printf("3 - Mover veiculo para outra vaga\n");
+        printf("4 - Atualizar descricao ou categoria\n");
+        printf("5 - Remover veiculo\n");
+        printf("6 - Listar veiculos cadastrados\n");
+        printf("7 - Exibir mapa de vagas\n");
+        printf("8 - Exibir relatorio da ocupacao\n");
+        printf("0 - Encerrar\n");
