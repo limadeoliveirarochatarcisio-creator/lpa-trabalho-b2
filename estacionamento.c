@@ -143,6 +143,26 @@ void consultar_veiculo(const Colecao *c) {
     }
 }
 
+void listar_veiculos(const Colecao *c) {
+    int i;
+
+    if (c->qtd == 0) {
+        printf("\nNao ha veiculos cadastrados no momento.\n");
+        return;
+    }
+
+    printf("\n--- VEICULOS CADASTRADOS (%d) ---\n", c->qtd);
+    for (i = 0; i < c->qtd; i++) {
+        printf("[%d] ID: %s | Categoria: %-5s | Posicao: F%d/C%d | Descricao: %s\n",
+               i + 1,
+               c->dados[i].id,
+               (c->dados[i].categoria == 1) ? "Carro" : "Moto",
+               c->dados[i].fileira,
+               c->dados[i].coluna,
+               c->dados[i].descricao);
+    }
+}
+
 int main(void) {
     int mapa[LINHAS][COLUNAS];
     Colecao colecao;
@@ -160,6 +180,7 @@ int main(void) {
         printf("   SISTEMA DE ESTACIONAMENTO (C)    \n");
         printf("====================================\n");
         printf("2 - Consultar veiculo por ID\n");
+        printf("6 - Listar veiculos cadastrados\n");
         printf("7 - Exibir mapa de vagas\n");
         printf("0 - Encerrar\n");
         printf("Escolha uma opcao: ");
@@ -174,6 +195,9 @@ int main(void) {
         switch (opcao) {
             case 2:
                 consultar_veiculo(&colecao);
+                break;
+            case 6:
+                listar_veiculos(&colecao);
                 break;
             case 7:
                 exibir_mapa(mapa);
